@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>时钟</title>
+		<style>
+			#canvas-frame {
+				width: 100%;
+				height: 600px;
+				background-color: #EEEEEE;
+			}	
+		</style>
+		<script type="text/javascript" src="js/three.min.js"></script>
+		<script type="text/javascript" src="js/clock.js"></script>
+		<script src="js/TrackballControls.js"></script>
+		<script type="text/javascript">
+			var width, height;
+			var scene, camera, renderer, light, controls;
+			var texture;
+			var mesh;
+			function init(){
+				width = document.getElementById("canvas-frame").clientWidth;
+				height = document.getElementById("canvas-frame").clientHeight;
+				//渲染器
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize(width, height);
+				renderer.setClearColor(0xFFFFFF, 1.0);
+				document.getElementById("canvas-frame").appendChild(renderer.domElement);
+				//舞台
+				scene = new THREE.Scene({
+			         antialias : true
+		      	});
+				//相机
+				camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 10000);
+//				camera = new THREE.OrthographicCamera(-width/2, width/2, height/2, -height/2, 0.1, 10000);
+				camera.position.x = 100;
+				camera.position.y = 300;
+				camera.position.z = 500;
+				camera.up.x = 0;
+				camera.up.y = 1;
+				camera.up.z = 0;
+				camera.lookAt({x : 0, y : 0, z : 0});
+				//控制器
+				controls = new THREE.TrackballControls( camera );
+
+		       	controls.rotateSpeed = 5.0;
+		       	controls.zoomSpeed = 5;
+		       	controls.panSpeed = 2;
+		
+		       	controls.noZoom = false;
+		       	controls.noPan = false;
+		
+		       	controls.staticMoving = true;
+		       	controls.dynamicDampingFactor = 0.3;
+				//灯光
+				light = new THREE.AmbientLight(0x88FFFF);
+				light.position.set(100, 100, 200);
+				scene.add(light);
+				//物体
+				var geometry = new THREE.CubeGeometry(200, 200, 200);
+				texture = new THREE.Texture( canvas);
+				texture.needsUpdate = true;
+				var material = new THREE.MeshBasicMaterial({color: 0xFFFFFF, map: texture});
+				mesh = new THREE.Mesh(geometry, material);
+				scene.add(mesh);
+				material = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+				mesh = new THREE.Mesh(geometry, material);
+				mesh.position.set(200, 100, 0);
+				scene.add(mesh);
+				console.log( canvas );
+//				window.addEventListener( 'resize', onWindowResize, false );
+				
+			};
+		    function onWindowResize() {
+		        camera.aspect = window.innerWidth / window.innerHeight;
+		        camera.updateProjectionMatrix();
+		        renderer.setSize( window.innerWidth, window.innerHeight );
+		    }
+			function render(){
+				texture.needsUpdate = true;
+				controls.update();
+				renderer.render(scene, camera);
+				requestAnimationFrame(render);
+			}
+			function start(){
+				Clock();
+				init();
+				render();
+			}
+		</script>
+	</head>
+	<body onload="start();">
+		<div id="canvas-frame"></div>
+	</body>
+</html>
