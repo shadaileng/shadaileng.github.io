@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebGL</title>
+    <style>
+    body{ text-align:center} 
+      #root {
+        width: 100%;
+        height: 600px;
+        background-color: #EEEEEE;
+      }
+      button {
+      	margin: 240px auto;
+      	width: 80px;
+      	height: 60px;
+      	background-color: #38A3D2;
+      	border: none;
+      }
+    </style>
+    <script type="text/javascript" src="js/three.min.js"></script>
+    <script type="text/javascript">
+    var stage = {
+			renderer: null,
+			scene: null,
+	      	camera: null,
+	      	light: null,
+	      	init: function (){
+	      		var width = document.getElementById("root").clientWidth;
+				var height = document.getElementById("root").clientHeight;
+				this.scene = new THREE.Scene();
+				this.renderer = new THREE.WebGLRenderer();
+				this.renderer.setSize(width, height);
+				this.renderer.setClearColor(0xFFFFFF, 1.0);
+				document.getElementById("root").appendChild(this.renderer.domElement);
+				this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
+				this.camera.position.set(10, 150, 150);
+				//this.camera.up = {x: 0, y: 1, z: 0};
+				this.camera.lookAt({x : 0, y : 0, z : 0});
+				this.camera.lookAt(this.scene.position);
+				this.scene.add(this.camera);
+				this.light = new THREE.AmbientLight(0xCCCC22);
+				this.scene.add(this.light);
+				this.setObj();
+			},
+		    setObj: function(){
+				var mesh = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshLambertMaterial({color: 0xFFFF00, side: THREE.DoubleSide}));
+				mesh.rotation.x = -Math.PI/2;
+				this.scene.add(mesh);
+			}
+		}
+		function render(){
+	    	stage.renderer.render(stage.scene, stage.camera);
+			requestAnimationFrame(render);
+		}
+
+		function start() {
+			var root = document.getElementById("root");
+			root.removeChild(root.childNodes[1]);
+			stage.init();
+			render();
+		}
+    </script>
+  </head>
+  <body>
+    <div id="root">
+    	<button onclick="start();">点击继续</button>
+    </div>
+  </body>
+</html>
