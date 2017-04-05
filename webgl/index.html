@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="screen-orientation" content="landscape">
     <title>WebGL</title>
     <style>
     body{ text-align:center} 
@@ -13,57 +14,312 @@
       }
       button {
       	margin: 240px auto;
-      	width: 80px;
-      	height: 60px;
+      	width: 180px;
+      	height: 120px;
+      	border-radius: 20px;
       	background-color: #38A3D2;
+      	box-shadow: 8px 8px 4px #888000;
       	border: none;
       }
     </style>
-    <script type="text/javascript" src="js/three.min.js"></script>
+    <script type="text/javascript" src="js/three.js"></script>
+    <script type="text/javascript" src="js/TrackballControls.js"></script>
+    <script type="text/javascript" src="js/dat.gui.js"></script>
+    <script type="text/javascript" src="js/Stats.js"></script>
     <script type="text/javascript">
     var stage = {
 			renderer: null,
 			scene: null,
 	      	camera: null,
+	      	cameraHelper: null,
 	      	light: null,
+	      	controls: null,
+	      	axis: null,
+	      	plane: null,
+	      	target: null,
+	      	point: false,
 	      	init: function (){
-	      		var width = document.getElementById("root").clientWidth;
-				var height = document.getElementById("root").clientHeight;
-				this.scene = new THREE.Scene();
-				this.renderer = new THREE.WebGLRenderer();
-				this.renderer.setSize(width, height);
-				this.renderer.setClearColor(0xFFFFFF, 1.0);
-				document.getElementById("root").appendChild(this.renderer.domElement);
-				this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
-				this.camera.position.set(10, 150, 150);
-				//this.camera.up = {x: 0, y: 1, z: 0};
-				this.camera.lookAt({x : 0, y : 0, z : 0});
-				this.camera.lookAt(this.scene.position);
-				this.scene.add(this.camera);
-				this.light = new THREE.AmbientLight(0xCCCC22);
-				this.scene.add(this.light);
-				this.setObj();
-			},
+		      		var width = document.getElementById("root").clientWidth;
+					var height = document.getElementById("root").clientHeight;
+
+					this.scene = new THREE.Scene();
+
+					this.renderer = new THREE.WebGLRenderer({alpha: true});
+					this.renderer.setSize(width, height);
+					this.renderer.setClearColor(0x000000, 1.0);
+					this.renderer.shadowMap.enabled = true;
+					this.renderer.shadowMap.soft = true;
+					document.getElementById("root").appendChild(this.renderer.domElement);
+
+					this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
+					this.camera.position.set(10, 150, 150);
+					this.camera.lookAt(this.scene.position);
+					this.scene.add(this.camera);
+
+					this.light = {
+						ambientLight: new THREE.AmbientLight(0x1c1c1c),
+						spotLight: new THREE.SpotLight(0xcccccc, 1.0, 0, 0.4),
+						pointLight: null
+					}
+					this.scene.add(this.light.ambientLight);
+					this.light.spotLight.position.set(10, 100, 50);
+					this.light.spotLight.castShadow = true;
+					this.light.spotLight.shadow.camera.near = 2;
+					this.light.spotLight.shadow.camera.far = 200;
+					this.light.spotLight.shadow.camera.fov = 30;
+					this.light.spotLight.shadow.mapSize.width = 1024;
+					this.light.spotLight.shadow.mapSize.height = 1024;
+					// this.light.spotLight.cameraVisible = true;
+					this.scene.add(this.light.spotLight);
+
+					this.target = new THREE.Object3D();
+					// this.target.position.set(0, 0, 0);
+
+					this.cameraHelper = new THREE.CameraHelper(this.light.spotLight.shadow.camera);
+					this.cameraHelper.name = 'cameraHelper';
+
+					// this.controls = new THREE.TrackballControls( this.camera );
+					// this.controls.rotateSpeed = 5.0;
+					// this.controls.zoomSpeed = 5;
+					// this.controls.panSpeed = 2;
+					// this.controls.noZoom = false;
+					// this.controls.noPan = false;
+					// this.controls.staticMoving = true;
+					// this.controls.dynamicDampingFactor = 0.3;
+
+					this.setObj();
+					this.scene.fog = new THREE.Fog(0xFFFFFF, 1.5);
+				},
+				update: function(){
+					// this.controls.update();
+					if(this.point){
+						var vertices =  this.scene.getObjectByName('particleSysytem').geometry.vertices;
+						vertices.forEach(function(e){
+							// e.y = e.y - (e.vy);
+							e.y -= e.vy;
+							e.x -= e.vx;
+							if(e.y <= 0) e.y = 100;
+							if(e.x >= 50 || e.x <= -50) e.vx *= -1;
+
+						});
+						this.scene.getObjectByName('particleSysytem').geometry.verticesNeedUpdate = true;
+					}
+				},
 		    setObj: function(){
-				var mesh = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshLambertMaterial({color: 0xFFFF00, side: THREE.DoubleSide}));
-				mesh.rotation.x = -Math.PI/2;
-				this.scene.add(mesh);
+					this.plane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color: 0xFFFFFF, side: THREE.DoubleSide}));
+					this.plane.rotation.x = -Math.PI/2;
+					this.plane.receiveShadow = true;
+					this.scene.add(this.plane);
+					this.axis = new THREE.AxisHelper(20);
+					this.scene.add(this.axis);
+					
+					this.scene.add(Mesh.sphere);
+					this.scene.add(Mesh.cube);
+
+					Mesh.lensFlare.position.copy(this.light.spotLight.position);
+					// console.log(this.light.spotLight.position);
+					this.scene.add(Mesh.lensFlare);
+
+					
+				},
+			cameraVisible: function(isVisible){
+				console.log(isVisible);
+				if(isVisible){
+					this.scene.add(this.cameraHelper);
+				}else{
+					this.scene.remove(this.scene.getObjectByName('cameraHelper'));
+				}
+			},
+			particleSysytem: function(isVisible){
+				if(isVisible){
+					this.point = true;
+					var geometry = new THREE.Geometry();
+					var material = new THREE.PointsMaterial({size: 5, vertexColors: true, color: 0xffffff, transparent: true, opacity:0.5, map: new THREE.TextureLoader().load("/img/alpha3.png")});
+					for(var i = 0; i < 100; i++){
+						var vertor = new THREE.Vector3(Math.random() * 100 - 50, Math.random() * 100, Math.random() * 100 - 50);
+						vertor.name = "vertor" + i;
+						vertor.vx = 0.1 + Math.random() / 5;
+						vertor.vy = (Math.random() - 0.5) / 3;
+						geometry.vertices.push(vertor);
+						geometry.colors.push(new THREE.Color(Math.random() * 0xffffff));
+					}
+					var system = new THREE.Points(geometry, material);
+					system.name = 'particleSysytem';
+					this.scene.add(system);
+				}else{
+					this.point = false;
+					this.scene.remove(this.scene.getObjectByName('particleSysytem'));
+				}
+				
+			},
+			getTexture: function () {
+				var canvas = document.createElement('canvas');
+				canvas.width = 32;
+				canvas.height = 32;
+
+				var ctx = canvas.getContext('2d');
+				// the body
+				ctx.translate(-81, -84);
+
+				ctx.fillStyle = "orange";
+				ctx.beginPath();
+				ctx.moveTo(83, 116);
+				ctx.lineTo(83, 102);
+				ctx.bezierCurveTo(83, 94, 89, 88, 97, 88);
+				ctx.bezierCurveTo(105, 88, 111, 94, 111, 102);
+				ctx.lineTo(111, 116);
+				ctx.lineTo(106.333, 111.333);
+				ctx.lineTo(101.666, 116);
+				ctx.lineTo(97, 111.333);
+				ctx.lineTo(92.333, 116);
+				ctx.lineTo(87.666, 111.333);
+				ctx.lineTo(83, 116);
+				ctx.fill();
+
+				// the eyes
+				ctx.fillStyle = "white";
+				ctx.beginPath();
+				ctx.moveTo(91, 96);
+				ctx.bezierCurveTo(88, 96, 87, 99, 87, 101);
+				ctx.bezierCurveTo(87, 103, 88, 106, 91, 106);
+				ctx.bezierCurveTo(94, 106, 95, 103, 95, 101);
+				ctx.bezierCurveTo(95, 99, 94, 96, 91, 96);
+				ctx.moveTo(103, 96);
+				ctx.bezierCurveTo(100, 96, 99, 99, 99, 101);
+				ctx.bezierCurveTo(99, 103, 100, 106, 103, 106);
+				ctx.bezierCurveTo(106, 106, 107, 103, 107, 101);
+				ctx.bezierCurveTo(107, 99, 106, 96, 103, 96);
+				ctx.fill();
+
+				// the pupils
+				ctx.fillStyle = "blue";
+				ctx.beginPath();
+				ctx.arc(101, 102, 2, 0, Math.PI * 2, true);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.arc(89, 102, 2, 0, Math.PI * 2, true);
+				ctx.fill();
+
+
+				var texture = new THREE.Texture(canvas);
+				texture.needsUpdate = true;
+				return texture;
+			}
+
+		}
+		var Mesh = {
+			sphere: null,
+			cube: null,
+			geometry: null,
+			lensFlare: null,
+			init: function(){
+				this.sphere = new THREE.Mesh(new THREE.SphereGeometry(10, 20, 20), new THREE.MeshLambertMaterial({color: 0xFFCCCC, side: THREE.DoubleSide}));
+				this.sphere.position.set(0, 50, 50);
+				this.sphere.castShadow = true; 
+				this.cube = new THREE.Mesh(new THREE.CubeGeometry(20, 20, 20), new THREE.MeshLambertMaterial({color: 0xFFCCCC, side: THREE.DoubleSide}));
+				this.cube.position.set(-30, 30, -30);
+				this.cube.castShadow = true; 
+
+				var background = new THREE.TextureLoader().load("/img/alpha0.png");
+				var texture = new THREE.TextureLoader().load("/img/alpha3.png");
+				this.lensFlare = new THREE.LensFlare(background, 350, 0.0, THREE.AdditiveBlending, 0xFF0000);
+				this.lensFlare.add(texture, 260, 0.0, THREE.AdditiveBlending);
+/*        
+				lensFlare.add(texture, 170, 0.6, THREE.AdditiveBlending);
+				lensFlare.add(texture, 100, 0.8, THREE.AdditiveBlending);
+				lensFlare.add(texture, 30, 1.0, THREE.AdditiveBlending);
+*/
+				
+
 			}
 		}
+		var i = 0;
+		function animation(){
+			Mesh.sphere.position.x = Math.sin(i * Math.PI / 180) * 50;
+			Mesh.sphere.position.z = Math.cos(i * Math.PI / 180) * 50;
+			Mesh.cube.rotation.x += 0.02;
+			Mesh.cube.rotation.y += 0.02;
+			if(i++ > 360) i = 0;
+			// console.log("(" + Mesh.sphere.position.x + ", " + Mesh.sphere.position.z + ") ===> " + i);
+		}
 		function render(){
-	    	stage.renderer.render(stage.scene, stage.camera);
+			update();
+			animation();			
+			stage.renderer.render(stage.scene, stage.camera);
 			requestAnimationFrame(render);
+		}
+		function update(){
+			stats.s.update();
+			stage.update();	
+		}
+		var Action = {
+			num: 0,
+			cameraVisible: false,
+			particleSysytem: false,
+			spotLightColor: '#ffffff',
+			addCube: function(){
+				var cubeSize = Math.ceil(Math.random() * 3);
+				var cube = new THREE.Mesh(new THREE.CubeGeometry(cubeSize, cubeSize, cubeSize), new THREE.MeshLambertMaterial({color: Math.random() * 0xffffff}));
+				cube.position.x = -80 + Math.round(Math.random() * 160);
+				cube.position.y = Math.round(Math.random() * 60);
+				cube.position.z = -80 + Math.round(Math.random() * 160);
+				cube.castShadow = true;
+				cube.name = "cube" + stage.scene.children.length;
+				stage.scene.add(cube);
+				this.num = stage.scene.children.length - 1;
+			},
+			removeCube: function() {
+				var allChilder = stage.scene.children;
+				var lastObj = allChilder[allChilder.length -1];
+				if(lastObj instanceof THREE.Mesh){
+					stage.scene.remove(lastObj);
+					this.num = stage.scene.children.length;
+				}
+			}
+		}
+		var Gui = {
+			gui: null,
+			bind: function(){
+				this.gui = new dat.GUI()
+				this.gui.add(Action, 'addCube');
+				this.gui.add(Action, 'removeCube');
+				this.gui.add(Action, 'num').listen();
+				this.gui.add(Action, 'cameraVisible').onChange(function(e){
+					stage.cameraVisible(e);
+				});
+				this.gui.add(Action, 'spotLightColor').onChange(function(e){
+					stage.light.spotLight.color = new THREE.Color(e);
+				});
+				this.gui.add(Action, 'particleSysytem').onChange(function(e){
+					stage.particleSysytem(e);
+				})
+			}
+		}
+		var stats = {
+			s: null,
+			init: function(){
+				this.s = new Stats();
+				this.s.setMode(0);
+				this.s.domElement.style.position = 'absolute';
+				this.s.domElement.style.left = '0px';
+				this.s.domElement.style.top = '0px';
+			}
 		}
 
 		function start() {
 			var root = document.getElementById("root");
 			root.removeChild(root.childNodes[1]);
+			stats.init();
+			root.appendChild(stats.s.domElement);
+			Mesh.init();
+			Gui.bind();
 			stage.init();
+			stage.light.spotLight.target = Mesh.sphere;
 			render();
 		}
     </script>
   </head>
-  <body>
+  <body onload="start();">
     <div id="root">
     	<button onclick="start();">点击继续</button>
     </div>

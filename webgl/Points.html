@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+	<head><meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <meta name="screen-orientation" content="landscape">
+	    <style>
+	    body{ text-align:center} 
+	      #root {
+	        width: 100%;
+	        height: 600px;
+	        background-color: #EEEEEE;
+	      }
+	      button {
+	      	margin: 240px auto;
+	      	width: 180px;
+	      	height: 120px;
+	      	border-radius: 20px;
+	      	background-color: #38A3D2;
+	      	box-shadow: 8px 8px 4px #888000;
+	      	border: none;
+	      }
+	    </style>
+		<title>Points</title>
+	    <script type="text/javascript" src="js/three.js"></script>
+	    <script type="text/javascript" src="js/dat.gui.js"></script>
+	    <script type="text/javascript" src="js/Stats.js"></script>
+	    <script type="text/javascript">
+	    	var root;
+	    	var stage = {
+	    		scene: null,
+	    		renderer: null,
+	    		camera: null,
+	    		cameraHelper: null,
+	    		light: null,
+	    		plane: null,
+	    		aixs: null,
+	    		points: {run: false, mode: 0},
+	    		fps: 0,
+	    		init: function(){
+	    			var width = root.clientWidth;
+	    			var height = root.clientHeight;
+
+	    			this.scene = new THREE.Scene();
+
+	    			this.renderer = new THREE.WebGLRenderer({alpha: true});
+	    			this.renderer.setSize(width, height);
+	    			this.renderer.setClearColor(0x000000, 1.0);
+					this.renderer.shadowMap.enabled = true;
+					this.renderer.shadowMap.soft = true;
+					root.appendChild(this.renderer.domElement);
+					root.appendChild(this.stats().domElement);
+
+					this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
+					this.camera.position.set(10, 250, 350);
+					this.camera.lookAt(this.scene.position);
+					this.scene.add(this.camera);
+
+					this.light = {
+						ambientLight: new THREE.AmbientLight(0x1c1c1c),
+						spotLight: new THREE.SpotLight(0xFFFFFF),
+						pointLight: null
+					}
+					this.scene.add(this.light.ambientLight);
+					this.light.spotLight.position.set(10, 200, 0);
+					this.light.spotLight.castShadow = true;
+					this.light.spotLight.shadow.camera.near = 0.2;
+					this.light.spotLight.shadow.camera.far = 2000;
+					this.light.spotLight.shadow.camera.fov = 30;
+					this.light.spotLight.shadow.mapSize.width = 1024;
+					this.light.spotLight.shadow.mapSize.height = 1024;
+					this.scene.add(this.light.spotLight);
+
+					this.cameraHelper = new THREE.CameraHelper(this.light.spotLight.shadow.camera);
+					this.cameraHelper.name = 'cameraHelper';
+
+					this.setObj();
+					this.scene.fog = new THREE.Fog(0xFFFFFF, 1.5);
+	    		},
+	    		setObj: function(){
+	    			this.plane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color: 0xFFFFFF, side: THREE.DoubleSide}));
+					this.plane.rotation.x = -Math.PI/2;
+					this.plane.receiveShadow = true;
+					this.scene.add(this.plane);
+
+					this.axis = new THREE.AxisHelper(20);
+					this.scene.add(this.axis);
+
+					this.scene.add(Mesh.sphere());
+					this.light.spotLight.target = this.plane;
+	    		},
+	    		pointsCloud: function(flag){
+	    			if(flag) {
+	    				this.points.run = true;
+	    				
+	    				this.scene.add(Mesh.points());
+	    			}else{
+	    				this.points.run = false;
+	    				this.scene.remove(this.scene.getObjectByName('points'));
+	    				Mesh.points_ = null;
+	    			}
+	    		},
+	    		lensFlare: function(flag){
+	    			if(flag){
+	    				this.scene.add(Mesh.lensFlare());
+	    			}else{
+	    				this.scene.remove(this.scene.getObjectByName('lensFlare'));
+	    				Mesh.lensFlare_ = null;
+	    			}
+	    		},
+	    		stats: function(){
+	    			var stats = new Stats();
+	    			stats.domElement.style.position = 'absolute';
+	    			stats.domElement.style.left = '0px';
+	    			stats.domElement.style.top = '0px';
+	    			stats.domElement.style.width = '200px';
+	    			return stats;
+	    		},
+	    		update: function(){
+	    			this.stats().update();
+	    			if(this.points.run) {
+	    				var vertices = this.scene.getObjectByName('points').geometry.vertices;
+	    				vertices.forEach(function(e){
+	    					if(stage.points.mode == 1){
+	    						e.x = e.r * Math.cos(e.i * Math.PI / 180);
+		    					e.y -= e.vy;
+	    						e.z = e.r * Math.sin(e.i * Math.PI / 180);
+	    						if(e.i++ >= 360) e.i = 0;
+	    						e.r-= 0.4;
+	    						if(e.r <= 0) e.r = 100
+			    				if(e.y <= 0) e.y = 100;
+	    					}else if(stage.points.mode == 0){
+	    						e.x -= e.vx;
+		    					e.y -= e.vy;
+		    					e.z -= e.vz;
+			    				if(e.x >= 100 || e.x <= -100) e.vx *= -1;
+			    				if(e.y <= 0) e.y = 100;
+			    				if(e.z >= 100 || e.z <= -100) e.vz *= -1;
+	    					}
+	    					
+	    				});
+	    				this.scene.getObjectByName('points').geometry.verticesNeedUpdate = true;
+	    			}
+	    		}
+	    	};
+	    	var Mesh = {
+	    		//{radius, wsegment, hsegment, color, position, castShadow, name}
+	    		sphere_: null,
+	    		sphere: function(e){
+	    			if(this.sphere_ === null){
+	    				if(e === undefined) e = {};
+		    			var radius = e.radius !== undefined ? e.radius : 20;
+		    			var wsegment = e.wsegment !== undefined ? e.wsegment : 10;
+		    			var hsegment = e.hsegment !== undefined ? e.hsegment : 20;
+		    			var color = e.color !== undefined ? e.color : 0xFFFFFF;
+		    			var position = e.position !== undefined ? e.position : {x: 50, y: 40, z: 0};
+		    			var castShadow = e.castShadow !== undefined ? e.castShadow : true;
+		    			var name = e.name !== undefined ? e.name : 'sphere';
+
+		    			var sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, wsegment, hsegment), new THREE.MeshLambertMaterial({color: color, side: THREE.DoubleSide}));
+		    			sphere.position.copy(position);
+		    			sphere.castShadow = castShadow;
+		    			sphere.name = name;
+		    			this.sphere_ = sphere;
+		    			return sphere;
+	    			}else{
+	    				return this.sphere_;
+	    			}
+	    		},
+	    		//{background, texturn, size, distance, color, position, name}
+	    		lensFlare_: null,
+	    		lensFlare: function(e){
+	    			if(this.lensFlare_ === null){
+	    				if(e === undefined) e = {};
+		    			var background = e.background !== undefined ? e.background : new THREE.TextureLoader().load("/img/alpha0.png");
+						var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("/img/alpha3.png");
+						var size = e.size !== undefined ? e.size : 150;
+						var distance = e.distance !== undefined ? e.distance : 0.0;
+						var color = e.color !== undefined ? e.color : 0xFFFFFF;
+						var position = e.position !== undefined ? e.position : {x: 0, y: 50, z: 0};
+						var name = e.name !== undefined ? e.name : 'lensFlare';
+						var lensFlare = new THREE.LensFlare(background, size, distance, THREE.AdditiveBlending, color);
+						lensFlare.add(texture, size, distance, THREE.AdditiveBlending);
+						lensFlare.position.copy(position);
+						lensFlare.name = name;
+						this.lensFlare_ = lensFlare;
+						return lensFlare;
+	    			}else{
+	    				return this.lensFlare_;
+	    			}
+	    		},
+	    		//{texture, size, transparent, opacity, count, w, h, l, vx, vy, vz, name}
+	    		points_: null,
+	    		points: function(e) {
+	    			if(this.points_ === null){
+	    				if(e === undefined) e = {};
+		    			var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("/img/alpha3.png");
+		    			var size = e.size !== undefined ? e.size : 15;
+		    			var transparent = e.transparent !== undefined ? e.transparent : true;
+		    			var opacity = e.opacity !== undefined ? e.opacity : 0.5;
+		    			var count = e.count !== undefined ? e.count : 100;
+		    			var w = e.w !== undefined ? e.w : 100;
+		    			var h = e.h !== undefined ? e.h : 100;
+		    			var l = e.l !== undefined ? e.l : 100;
+		    			var rvx = e.vx !== undefined ? e.vx : 0.5;
+		    			var rvy = e.vy !== undefined ? e.vy : 0.1;
+		    			var rvz = e.vz !== undefined ? e.vz : 0.5;
+		    			var name = e.name !== undefined ? e.name : 'points';
+	    				var geometry = new THREE.Geometry();
+	    				var material = new THREE.PointsMaterial({size: size, vertexColors: true, color: 0xffffff, transparent: transparent, opacity:opacity, map: texture, depthWrite: false});
+
+	    				for(var i =0; i < count; i++){
+	    					var x = Math.random() * w - w/2;
+	    					var y = Math.random() * h;
+	    					var z = Math.random() * l - l/2;
+	    					var vertor = new THREE.Vector3(x, y, z);
+	    					vertor.vx = Math.random() - rvx;
+	    					vertor.vy = rvy + Math.random() / 5;
+	    					vertor.vz = Math.random() - rvz;
+	    					var t = z / x;
+	    					if(z > 0){
+	    						vertor.i = Math.round(Math.atan(t) / Math.PI * 180);
+	    					}else if(z < 0){
+	    						vertor.i = Math.round((Math.atan(t) + Math.PI) / Math.PI * 180);
+	    					}else {
+	    						vertor.i = 0;
+	    					}
+	    					vertor.r = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2)));
+	    					geometry.vertices.push(vertor);
+	    					geometry.colors.push(new THREE.Color(Math.random() * 0xffffff));
+	    				}
+	    				var points = new THREE.Points(geometry, material);
+	    				points.name = name;
+	    				this.points_ = points;
+	    				return points;
+	    			}else{
+	    				return this.points_;
+	    			}
+	    			
+	    		}
+	    	}
+	    	var Action = {
+	    		camera: false,
+	    		points: false,
+	    		pointsMode: '随机',
+	    		lensFlare: false,
+	    	}
+	    	var GUI = {
+	    		gui: null,
+	    		init: function(){
+	    			var gui = new dat.GUI();
+	    			gui.add(Action, 'camera').onChange(function(e){
+	    				if(e){
+	    					stage.scene.add(stage.cameraHelper);
+	    				}else{
+	    					stage.scene.remove(stage.scene.getObjectByName('cameraHelper'));
+	    				}
+	    			});
+	    			var points = gui.addFolder('粒子系统');
+	    			points.add(Action, 'points').onChange(function(e){
+	    				stage.pointsCloud(e);
+	    			});
+	    			points.add(Action, 'pointsMode', ['随机', '旋转']).onChange(function(e){
+	    				switch(e){
+	    					case '随机':
+	    						stage.points.mode = 0;
+	    					break;
+	    					case '旋转':
+	    						stage.points.mode = 1;
+	    					break;
+	    				}
+	    			});
+
+	    			gui.add(Action, 'lensFlare').onChange(function(e){
+	    				stage.lensFlare(e);
+	    			});
+	    			this.gui = gui;
+	    		}
+	    	}
+	    	function update(){
+	    		stage.update();
+	    	}
+	    	function animation(){
+	    		Mesh.sphere().position.x = Math.cos(stage.fps * Math.PI / 180) * 50;
+	    		Mesh.sphere().position.z = Math.sin(stage.fps * Math.PI / 180) * 50;
+	    		if(stage.fps++ >= 360) stage.fps = 0;
+	    	}
+	    	function render(){
+	    		update();
+	    		animation();
+	    		stage.renderer.render(stage.scene, stage.camera);
+				requestAnimationFrame(render);
+	    	}
+
+	    	function start(){
+	    		root = document.getElementById('root');
+	    		stage.init();
+	    		GUI.init();
+	    		render();
+	    	}
+
+	    </script>
+	</head>
+	<body onload="start()">
+		<div id='root'></div>
+	</body>
+</html>
