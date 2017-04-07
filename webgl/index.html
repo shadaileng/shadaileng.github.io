@@ -50,6 +50,7 @@
 					this.renderer.shadowMap.enabled = true;
 					this.renderer.shadowMap.soft = true;
 					document.getElementById("root").appendChild(this.renderer.domElement);
+					document.getElementById("root").appendChild(this.stats().domElement);
 
 					this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
 					this.camera.position.set(10, 150, 150);
@@ -90,7 +91,20 @@
 					this.setObj();
 					this.scene.fog = new THREE.Fog(0xFFFFFF, 1.5);
 				},
+	    		stats_: null,
+	    		stats: function(){
+	    			if(this.stats_ === null){
+	    				var stats = new Stats();
+		    			stats.domElement.style.position = 'absolute';
+		    			stats.domElement.style.left = '0px';
+		    			stats.domElement.style.top = '0px';
+		    			stats.domElement.style.width = '200px';
+		    			this.stats_ = stats;
+	    			}
+	    			return this.stats_;
+	    		},
 				update: function(){
+					this.stats().update();
 					// this.controls.update();
 					if(this.point){
 						var vertices =  this.scene.getObjectByName('particleSysytem').geometry.vertices;
@@ -134,7 +148,7 @@
 				if(isVisible){
 					this.point = true;
 					var geometry = new THREE.Geometry();
-					var material = new THREE.PointsMaterial({size: 5, vertexColors: true, color: 0xffffff, transparent: true, opacity:0.5, map: new THREE.TextureLoader().load("/img/alpha3.png")});
+					var material = new THREE.PointsMaterial({size: 5, vertexColors: true, color: 0xffffff, transparent: true, opacity:0.5, map: new THREE.TextureLoader().load("img/alpha3.png")});
 					for(var i = 0; i < 100; i++){
 						var vertor = new THREE.Vector3(Math.random() * 100 - 50, Math.random() * 100, Math.random() * 100 - 50);
 						vertor.name = "vertor" + i;
@@ -220,8 +234,8 @@
 				this.cube.position.set(-30, 30, -30);
 				this.cube.castShadow = true; 
 
-				var background = new THREE.TextureLoader().load("/img/alpha0.png");
-				var texture = new THREE.TextureLoader().load("/img/alpha3.png");
+				var background = new THREE.TextureLoader().load("img/alpha0.png");
+				var texture = new THREE.TextureLoader().load("img/alpha3.png");
 				this.lensFlare = new THREE.LensFlare(background, 350, 0.0, THREE.AdditiveBlending, 0xFF0000);
 				this.lensFlare.add(texture, 260, 0.0, THREE.AdditiveBlending);
 /*        

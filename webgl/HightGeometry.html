@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+	<head><meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <meta name="screen-orientation" content="landscape">
+	    <style>
+	    body{ text-align:center} 
+	      #root {
+	        width: 100%;
+	        height: 600px;
+	        background-color: #EEEEEE;
+	      }
+	      button {
+	      	margin: 240px auto;
+	      	width: 180px;
+	      	height: 120px;
+	      	border-radius: 20px;
+	      	background-color: #38A3D2;
+	      	box-shadow: 8px 8px 4px #888000;
+	      	border: none;
+	      }
+	    </style>
+		<title>Points</title>
+	    <script type="text/javascript" src="js/three.js"></script>
+	    <script type="text/javascript" src="js/dat.gui.js"></script>
+	    <script type="text/javascript" src="js/Stats.js"></script>
+	    <script type="text/javascript" src="js/GeometryExporter.js"></script>
+	    <script type="text/javascript" src="js/OBJLoader.js"></script>
+	    <script type="text/javascript" src="js/MTLLoader.js"></script>
+	    <script type="text/javascript" src="js/DDSLoader.js"></script>
+	    <script type="text/javascript">
+	    	var root;
+	    	var stage = {
+	    		scene: null,
+	    		renderer: null,
+	    		camera: null,
+	    		cameraHelper: null,
+	    		light: null,
+	    		plane: null,
+	    		aixs: null,
+	    		fps: 0,
+	    		init: function(){
+	    			var width = root.clientWidth;
+	    			var height = root.clientHeight;
+
+	    			this.scene = new THREE.Scene();
+
+	    			this.renderer = new THREE.WebGLRenderer({alpha: true});
+	    			this.renderer.setSize(width, height);
+	    			this.renderer.setClearColor(0x000000, 1.0);
+	    			// this.renderer.setPixelRatio( window.devicePixelRatio );
+					this.renderer.shadowMap.enabled = true;
+					this.renderer.shadowMap.soft = true;
+					root.appendChild(this.renderer.domElement);
+					root.appendChild(this.stats().domElement);
+
+					this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
+					this.camera.position.set(10, 30, 30);
+					this.camera.lookAt(this.scene.position);
+					this.scene.add(this.camera);
+
+					this.light = {
+						ambientLight: new THREE.AmbientLight(0x1c1c1c),
+						spotLight: new THREE.SpotLight(0xcf8c8c, 1.0, 0.0, 0.7),
+						pointLight: null
+					}
+					this.scene.add(this.light.ambientLight);
+					this.light.spotLight.position.set(5, 30, 0);
+					this.light.spotLight.castShadow = true;
+					this.light.spotLight.shadow.camera.near = 0.2;
+					this.light.spotLight.shadow.camera.far = 2000;
+					this.light.spotLight.shadow.camera.fov = this.light.spotLight.angle * 180 / Math.PI;
+					this.light.spotLight.shadow.mapSize.width = 1024;
+					this.light.spotLight.shadow.mapSize.height = 1024;
+					this.scene.add(this.light.spotLight);
+
+					this.cameraHelper = new THREE.CameraHelper(this.light.spotLight.shadow.camera);
+					this.cameraHelper.name = 'cameraHelper';
+
+					this.setObj();
+					this.scene.fog = new THREE.Fog(0xFFFFFF, 1.5);
+	    		},
+	    		setObj: function(){
+	    			this.plane = new THREE.Mesh(new THREE.PlaneGeometry(50, 50, 100, 100), new THREE.MeshLambertMaterial({color: 0xFFFFFF, side: THREE.DoubleSide}));
+					this.plane.rotation.x = -Math.PI/2;
+					this.plane.receiveShadow = true;
+					this.scene.add(this.plane);
+
+					this.axis = new THREE.AxisHelper(20);
+					this.scene.add(this.axis);
+
+					this.light.spotLight.target = this.plane;
+
+					this.scene.add(Mesh.group());
+					this.loadObj({src:'model/Gol D Ace/Gol D Ace', scale: 0.10});
+
+
+	    		},
+	    		//{src, material, position, scale, name}
+	    		loadObj: function(obj){
+	    			obj = obj === undefined ? {} : obj;
+	    			var src = obj.src !== undefined ? obj.src : 'model/tree.obj';
+	    			var material = obj.material !== undefined ? obj.material : new THREE.MeshLambertMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
+	    			var position = obj.position !== undefined ? obj.position : {x: 0, y: 0, z: 0};
+	    			var scale = obj.scale !== undefined ? obj.scale : 1;
+	    			var name = obj.name !== undefined ? obj.name : 'load';
+	    			var self = this;
+					// THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+					var mtlLoader = new THREE.MTLLoader();
+					mtlLoader.setPath(src.substr(0, src.lastIndexOf('/') + 1))
+					mtlLoader.load( src.substr(src.lastIndexOf('/') + 1, src.length) + '.mtl', function( materials ) {
+
+						materials.preload();
+
+						var objLoader = new THREE.OBJLoader();
+						objLoader.setMaterials( materials );
+						objLoader.setPath(src.substr(0, src.lastIndexOf('/') + 1));
+						objLoader.load( src.substr(src.lastIndexOf('/') + 1, src.length) + '.obj', function ( object ) {
+							object.children.forEach(function(e){
+								e.castShadow = true;
+							});
+							// object.position.y = - 95;
+
+							object.scale.set(scale, scale, scale);
+							object.name = name;
+		    				self.scene.add(object);
+	    				},
+	    				function(xhr){
+	    					console.log(xhr.loaded / xhr.total * 100 + '% loaded');
+	    				},
+	    				function(xhr){
+	    					console.log('load cause error');
+	    				});
+					});
+	    		},
+	    		stats_: null,
+	    		stats: function(){
+	    			if(this.stats_ === null){
+	    				var stats = new Stats();
+		    			stats.domElement.style.position = 'absolute';
+		    			stats.domElement.style.left = '0px';
+		    			stats.domElement.style.top = '0px';
+		    			stats.domElement.style.width = '200px';
+		    			this.stats_ = stats;
+	    			}	    			
+	    			return this.stats_;
+	    		},
+	    		update: function(){
+	    			this.stats().update();
+	    		}
+	    	};
+	    	var Mesh = {
+	    		group_: null,
+	    		group: function(e){
+	    			if(this.group_ === null){
+	    				if(e === undefined) e = {};
+	    				var sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 20), new THREE.MeshLambertMaterial({color: 0x00CCCC, side: THREE.DoubleSide}));
+	    				sphere.position.set(-3, 4, 0);
+	    				var cube = new THREE.Mesh(new THREE.CubeGeometry(3, 3, 3), new THREE.MeshLambertMaterial({color: 0x00CCCC, side: THREE.DoubleSide}));
+	    				cube.position.set(3, 4, 0);
+	    				var group = new THREE.Object3D();
+	    				group.add(sphere);
+	    				group.add(cube);
+	    				group.name = 'group';
+	    				sphere.castShadow = true;
+	    				cube.castShadow = true;
+	    				this.group_ = group;
+	    			}
+	    			return this.group_;
+	    		},
+	    		torusKnot_: null,
+	    		torusKnot: function(e){
+	    			if(this.torusKnot_ === null){
+	    				e = e === undefined ? {} : e;
+	    				var torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(2, 1, 40, 40), new THREE.MeshLambertMaterial({color: 0x00CCCC, side: THREE.DoubleSide}));
+	    				torusKnot.position.y = 10;
+	    				this.torusKnot_ = torusKnot;
+	    			}
+	    			return this.torusKnot_;
+	    		},
+	    		loadObj_: null,
+	    		loadObj: function(obj){
+	    			if(this.loadObj_ === null){
+
+	    			}
+	    			
+	    		},
+
+	    	}
+	    	var Action = {
+	    		camera: false,
+	    		arrow: false,
+	    		export: false,
+	    		import: false,
+	    		load: false,
+	    	}
+	    	var GUI = {
+	    		gui: null,
+	    		init: function(){
+	    			var gui = new dat.GUI();
+	    			gui.add(Action, 'camera').onChange(function(e){
+	    				if(e){
+	    					stage.scene.add(stage.cameraHelper);
+	    				}else{
+	    					stage.scene.remove(stage.scene.getObjectByName('cameraHelper'));
+	    				}
+	    			});
+	    			var group = gui.addFolder('组');
+	    			group.add(Action, 'arrow').onChange(function(e){
+	    				stage.scene.add(new THREE.ArrowHelper({x: 0, y:1, z: 0}, Mesh.group().position, 10, 0xFF0000));
+	    			});
+	    			gui.add(Action, 'load').onChange(function(e){
+
+	    			});
+	    			// gui.add(Action, 'export').onChange(function(e){
+	    			// 	// var export = new THREE.TypedGeometryExporter();
+	    			// 	var out = new THREE.GeometryExporter().parse(Mesh.torusKnot().geometry);
+	    			// 	console.log(JSON.stringify(out));
+	    			// 	localStorage.setItem('export', JSON.stringify(out));
+	    			// });
+	    			// gui.add(Action, 'import').onChange(function(e){
+	    			// 	// var export = new THREE.TypedGeometryExporter();
+	    			// 	var geometry = new THREE.JSONLoader().parse(localStorage.getItem('export'));
+	    			// 	console.log(geometry);
+	    			// });
+	    			this.gui = gui;
+	    		}
+	    	}
+	    	function update(){
+	    		stage.update();
+	    	}
+	    	function animation(){
+	    		var group = Mesh.group();
+	    		group.rotation.y = stage.fps * Math.PI / 180;
+	    		if(stage.fps++ >= 360) stage.fps = 0;
+	    	}
+	    	function render(){
+	    		update();
+	    		animation();
+	    		stage.renderer.render(stage.scene, stage.camera);
+				requestAnimationFrame(render);
+	    	}
+
+	    	function start(){
+	    		root = document.getElementById('root');
+	    		stage.init();
+	    		GUI.init();
+	    		render();
+	    	}
+
+	    </script>
+	</head>
+	<body onload="start()">
+		<div id='root'></div>
+	</body>
+</html>
