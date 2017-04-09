@@ -20,7 +20,7 @@
 	      	border: none;
 	      }
 	    </style>
-		<title>Points</title>
+		<title>生日快乐 φ(゜▽゜*)♪</title>
 	    <script type="text/javascript" src="js/three.js"></script>
 	    <script type="text/javascript" src="js/dat.gui.js"></script>
 	    <script type="text/javascript" src="js/Stats.js"></script>
@@ -400,16 +400,18 @@
 	    		}
 	    		if(Mesh.lensFlare_ !== null){
 	    			Mesh.lensFlare_.lensFlares.forEach(function(e){
-	    				if(e.size < 500) {
-	    					e.size++;
-	    				}else{
-	    					Mesh.points_.obj.geometry.vertices.forEach(function(e){
-	    						e.step = 1;
-	    					});
+	    				if(e.size < 500){
+    						e.size++;
+    					}else{
+	    					if(Mesh.loadObj_.step === 1){
+	    						Mesh.points_.obj.geometry.vertices.forEach(function(e){
+		    						e.step = 1;
+		    					});
 
-	    					stage.scene.add(Mesh.loadObj_.obj);	
-	    					Mesh.loadObj_.step = 2;	
-	    					Mesh.lensFlare_ = null
+		    					stage.scene.add(Mesh.loadObj_.obj);	
+		    					Mesh.loadObj_.step = 2;	
+		    					Mesh.lensFlare_ = null
+	    					}
 	    				}
 	    			});
 	    		}
