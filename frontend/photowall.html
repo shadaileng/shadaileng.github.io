@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        #contain {
+            width: 100%;
+            height: 200px;
+            position: absolute;
+            left: 0;
+            top: 150px;
+            border: 1px solid #fff;
+            perspective: 830px;
+            transform-style: preserve-3d;
+        }
+        
+        #contain .div {
+            position: absolute;
+            width: 300px;
+            height: 200px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+            transition: 1s;
+            -webkit-box-reflect: below 5px -webkit-linear-gradient(top, rgba(0, 0, 0, 0) 10%, rgba(0, 0, 0, 0.7) 100%);
+        }
+        
+        #contain .div img {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #contain .div.left {
+            transform: rotateY(45deg);
+        }
+        
+        #contain .div.middle {
+            transform: translateZ(150px);
+        }
+        
+        #contain .div.right {
+            transform: rotateY(-45deg);
+        }
+        
+        #contain .div .l {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 0;
+            background-color: rgba(0, 255, 255, 0.4);
+            transition: 1s;
+        }
+        
+        #contain .div .b {
+            position: absolute;
+            left: 0;
+            top: 200px;
+            width: 303px;
+            height: 3px;
+            background-color: rgba(0, 255, 255, 0.4);
+            transition: 1s 1s;
+        }
+        
+        #contain .div .t {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 3px;
+            background-color: rgba(0, 255, 255, 0.4);
+            transition: 1s;
+        }
+        
+        #contain .div .r {
+            position: absolute;
+            left: 300px;
+            top: 0;
+            width: 3px;
+            height: 203px;
+            background-color: rgba(0, 255, 255, 0.4);
+            transition: 1s 1s;
+        }
+        
+        #contain .div p {
+            position: absolute;
+            bottom: 0;
+            width: 300px;
+            height: 0px;
+            background-color: rgba(0, 0, 0, 0.7);
+            transition: 1s;
+            text-align: center;
+            line-height: 40px;
+            color: #0FF;
+            overflow: hidden;
+        }
+    </style>
+    <metacharset="utf-8">
+        <title>PhotoWall</title>
+        <script>
+            window.onload = function() {
+                let divs = document.getElementById("contain").getElementsByClassName("div");
+                let cur = (divs.length - 1) / 2;
+                for (let i = 0; i < divs.length; i++) {
+                    divs[i].style.left = (i * 133) + "px";
+                    divs[i].onclick = function() {
+                        this.index = i;
+                        for (let j = 0; j < divs.length; j++) {
+                            divs[j].style.left = (divs[j].offsetLeft - (this.index - cur) * 100) + "px";
+                            if (j < this.index) divs[j].className = "div left";
+                            if (j > this.index) divs[j].className = "div right";
+                        }
+                        cur = this.index;
+                        this.className = "div middle";
+                    }
+                    divs[i].onmouseenter = function() {
+                        let l = this.getElementsByClassName("l")[0];
+                        let b = this.getElementsByClassName("b")[0];
+                        let t = this.getElementsByClassName("t")[0];
+                        let r = this.getElementsByClassName("r")[0];
+                        let p = this.getElementsByTagName("p")[0];
+                        l.style.height = "200px";
+                        b.style.width = "303px";
+                        t.style.width = "300px";
+                        r.style.height = "203px";
+                        p.style.height = "40px";
+                        p.innerHTML = this.getElementsByTagName("img")[0].alt
+                    }
+                    divs[i].onmouseleave = function() {
+                        let l = this.getElementsByClassName("l")[0];
+                        let b = this.getElementsByClassName("b")[0];
+                        let t = this.getElementsByClassName("t")[0];
+                        let r = this.getElementsByClassName("r")[0];
+                        let p = this.getElementsByTagName("p")[0];
+                        l.style.height = "0";
+                        b.style.width = "0";
+                        t.style.width = "0";
+                        r.style.height = "0";
+                        p.style.height = "0";
+                    }
+                }
+            }
+        </script>
+</head>
+
+<body>
+    <div id="contain">
+        <div class="div left">
+            <img src="img/gakki1.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div left">
+            <img src="img/gakki2.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div left">
+            <img src="img/gakki3.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div left">
+            <img src="img/gakki4.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div middle">
+            <img src="img/gakki5.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div right">
+            <img src="img/gakki6.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div right">
+            <img src="img/gakki7.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div right">
+            <img src="img/gakki8.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+        <div class="div right">
+            <img src="img/gakki9.gif" alt="gakki">
+            <div class="l"></div>
+            <div class="b"></div>
+            <div class="t"></div>
+            <div class="r"></div>
+            <p></p>
+        </div>
+    </div>
+</body>
+
+</html>

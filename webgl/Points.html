@@ -171,8 +171,8 @@
 	    		lensFlare: function(e){
 	    			if(this.lensFlare_ === null){
 	    				if(e === undefined) e = {};
-		    			var background = e.background !== undefined ? e.background : new THREE.TextureLoader().load("/img/alpha0.png");
-						var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("/img/alpha3.png");
+		    			var background = e.background !== undefined ? e.background : new THREE.TextureLoader().load("/webgl/img/alpha0.png");
+						var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("/webgl/img/alpha3.png");
 						var size = e.size !== undefined ? e.size : 150;
 						var distance = e.distance !== undefined ? e.distance : 0.0;
 						var color = e.color !== undefined ? e.color : 0xFFFFFF;
@@ -193,7 +193,7 @@
 	    		points: function(e) {
 	    			if(this.points_ === null){
 	    				if(e === undefined) e = {};
-		    			var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("/img/alpha3.png");
+		    			var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("/webgl/img/alpha3.png");
 		    			var size = e.size !== undefined ? e.size : 15;
 		    			var transparent = e.transparent !== undefined ? e.transparent : true;
 		    			var opacity = e.opacity !== undefined ? e.opacity : 0.5;

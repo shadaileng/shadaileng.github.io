@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <style id="css">
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            height: 100%;
+        }
+        
+        #stage {
+            position: absolute;
+            perspective: 830px;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+        
+        #cube {
+            width: 200px;
+            height: 200px;
+            margin: 150px auto;
+            transition: 1s;
+        }
+        /*
+        #cube:hover {
+            transform: rotateY(360deg);
+            transition: 13s;
+        }
+        #cube div {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 1px solid red;
+            box-shadow: 0 0 10px 5px #cc0066;
+        }
+        */
+        
+        #cube ul li {
+            position: relative;
+            width: 200px;
+            transform-style: preserve-3d;
+            transform-origin: 50% 50% -110px;
+        }
+        
+        #cube ul li div {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            /*color: white;*/
+            /*background-size: 200px 200px;*/
+        }
+        
+        #cube ul li div:nth-child(1) {
+            left: -201px;
+            top: 0;
+            transform-origin: right;
+            transform: rotateY(-90deg);
+            background-image: url("img/gakki3.gif");
+            background-size: 200px 200px;
+        }
+        
+        #cube ul li div:nth-child(2) {
+            left: 201px;
+            top: 0;
+            transform-origin: left;
+            transform: rotateY(90deg);
+            background-image: url("img/gakki4.gif");
+            background-size: 200px 200px;
+        }
+        
+        #cube ul li div:nth-child(3) {
+            left: 0;
+            top: 0;
+            background-image: url("img/gakki5.gif");
+            background-size: 200px 200px;
+        }
+        
+        #cube ul li div:nth-child(4) {
+            left: 0;
+            top: 0;
+            /*transform: rotateY(180deg);*/
+            transform: translateZ(-201px);
+            background-image: url("img/gakki6.gif");
+            background-size: 200px 200px;
+        }
+        
+        ol {
+            margin: auto;
+        }
+        
+        ol li {
+            width: 40px;
+            height: 40px;
+            background: #888;
+            border-radius: 50%;
+            margin: 10px 10px;
+            float: left;
+            text-align: center;
+        }
+        
+        ol li:hover {
+            cursor: pointer;
+        }
+        
+        ol li.cur {
+            background-color: red;
+        }
+        
+        li {
+            list-style: none;
+            display: block;
+        }
+    </style>
+    <metacharset="utf-8">
+        <title>Drag</title>
+        <script>
+            window.onload = function() {
+                let stage = document.getElementById("stage");
+                let cube = document.getElementById("cube");
+                let ocss = document.getElementById("css");
+                let olis = document.getElementsByTagName("ol")[0].getElementsByTagName("li");
+                let ul = cube.getElementsByTagName("ul")[0];
+                let count = 5;
+                let h = 200 / count;
+                let z = 0;
+                let li_div = "";
+                let zIndex = "";
+                for (let i = 0; i < count; i++) {
+                    ul.innerHTML += "<li style='height: " + h + "px;'><div></div><div></div><div></div><div></div></li>";
+                    li_div += "#cube ul li:nth-child(" + (i + 1) + ") div{background-position: 0 " + (i * -h) + "px}";
+                    zIndex += "#cube ul li:nth-child(" + (i + 1) + "){transition: 1s " + (i * 0.05) + "s}"
+                }
+                ocss.innerHTML += li_div + zIndex;
+                for (let i = 0; i < olis.length; i++) {
+                    olis[i].onclick = function() {
+                        this.index = i;
+                        for (var j = 0; j < olis.length; j++) {
+                            olis[j].className = "";
+                        }
+                        this.className = "cur";
+                        ocss.innerHTML += "#cube ul li{transform: rotateY(" + (this.index * -90) + "deg)}";
+                    }
+                }
+
+
+
+
+            }
+        </script>
+</head>
+
+<body>
+    <div id="stage">
+        <div id="cube">
+            <ul></ul>
+        </div>
+        <ol>
+            <li>下</li>
+            <li class="cur">前</li>
+            <li>左</li>
+            <li>后</li>
+            <li>右</li>
+            <li>上</li>
+        </ol>
+
+    </div>
+</body>
+
+</html>
