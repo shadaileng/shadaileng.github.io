@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+	<head><meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <meta name="screen-orientation" content="landscape">
+	    <style>
+	    body{ text-align:center} 
+	      #root {
+	        width: 100%;
+	        height: 600px;
+	        background-color: #EEEEEE;
+	      }
+	      button {
+	      	margin: 240px auto;
+	      	width: 180px;
+	      	height: 120px;
+	      	border-radius: 20px;
+	      	background-color: #38A3D2;
+	      	box-shadow: 8px 8px 4px #888000;
+	      	border: none;
+	      }
+	    </style>
+		<title>生日快乐 φ(゜▽゜*)♪</title>
+	    <script type="text/javascript" src="js/three.js"></script>
+	    <script type="text/javascript" src="js/dat.gui.js"></script>
+	    <script type="text/javascript" src="js/Stats.js"></script>
+	    <script type="text/javascript" src="js/GeometryExporter.js"></script>
+	    <script type="text/javascript" src="js/OBJLoader.js"></script>
+	    <script type="text/javascript" src="js/MTLLoader.js"></script>
+	    <script type="text/javascript" src="js/DDSLoader.js"></script>
+	    <script type="text/javascript" src="js/tween.min.js"></script>
+	    <script type="text/javascript" src="js/controls/FlyControls.js"></script>
+	    <script type="text/javascript" src="js/controls/FirstPersonControls.js"></script>
+	    <script type="text/javascript" src="js/controls/OrbitControls.js"></script>
+	    <script type="text/javascript">
+	    	var root;
+	    	var clock;
+	    	var stage = {
+	    		scene: null,
+	    		renderer: null,
+	    		camera: null,
+	    		cameraHelper: null,
+	    		light: null,
+	    		plane: null,
+	    		aixs: null,
+	    		fps: 0,
+	    		conrols: {},
+	    		init: function(){
+	    			var width = root.clientWidth;
+	    			var height = root.clientHeight;
+
+	    			this.scene = new THREE.Scene();
+
+	    			this.renderer = new THREE.WebGLRenderer({alpha: true});
+	    			this.renderer.setSize(width, height);
+	    			this.renderer.setClearColor(0xffbbff, 1.0);
+	    			// this.renderer.setPixelRatio( window.devicePixelRatio );
+					this.renderer.shadowMap.enabled = true;
+					this.renderer.shadowMap.soft = true;
+					root.appendChild(this.renderer.domElement);
+					root.appendChild(this.stats().domElement);
+
+					this.camera = new THREE.PerspectiveCamera(75, width/height, 0.01, 10000);
+					this.camera.position.set(0, 40, 120);
+					// this.camera.lookAt(this.scene.position);
+					this.scene.add(this.camera);
+
+					this.light = {
+						ambientLight: new THREE.AmbientLight(0x8d8d8d),
+						spotLight: new THREE.SpotLight(0xdedede, 1.0, 0.0, 0.3),
+						spotLight_: null,
+						pointLight: null
+					}
+					this.scene.add(this.light.ambientLight);
+					this.light.spotLight.position.set(10, 80, 0);
+					this.light.spotLight.castShadow = true;
+					this.light.spotLight.shadow.camera.near = 0.2;
+					this.light.spotLight.shadow.camera.far = 2000;
+					this.light.spotLight.shadow.camera.fov = this.light.spotLight.angle * 180 / Math.PI;
+					this.light.spotLight.shadow.mapSize.width = 1024;
+					this.light.spotLight.shadow.mapSize.height = 1024;
+					this.scene.add(this.light.spotLight);
+
+
+					var self = this;
+					this.controls = {
+						// flyControls: new THREE.FlyControls(self.camera),
+						// firstPersonControls: new THREE.FirstPersonControls(self.camera),
+						orbitControls: new THREE.OrbitControls(self.camera),
+
+					}
+
+					// this.controls.flyControls.movementSpeed = 25;
+					// this.controls.flyControls.domElement = root;
+					// this.controls.flyControls.rollSpeed = Math.PI / 24;
+					// this.controls.flyControls.autoForward = true;
+					// this.controls.flyControls.dragToLook = false;
+
+					// this.controls.firstPersonControls.lookSpeed = 0.4;
+					// this.controls.firstPersonControls.movementSpeed = 10;
+					// this.controls.firstPersonControls.noFly = true;
+					// this.controls.firstPersonControls.lookVertical = true;
+					// this.controls.firstPersonControls.verticalMin = 1.0;
+					// this.controls.firstPersonControls.verticalMax = 2.0;
+					// this.controls.firstPersonControls.lon = -90;//水平角
+					// this.controls.firstPersonControls.lat = -50;//俯视角
+
+					// this.controls.orbitControls.autoRotate = true;
+
+
+
+					this.cameraHelper = new THREE.CameraHelper(this.light.spotLight.shadow.camera);
+					this.cameraHelper.name = 'cameraHelper';
+
+					this.setObj();
+					// new TWEEN.Tween(this.camera.position).to({x: 100}, 10000).easing(TWEEN.Easing.Elastic.InOut);
+
+					// new TWEEN.Tween(this.camera.position).to( { x: 40 }, 3000 ).easing(TWEEN.Easing.Elastic.InOut).start();
+					this.scene.fog = new THREE.Fog(0xFFFFFF, 1.5);
+	    		},
+	    		setObj: function(){
+	    			this.plane = new THREE.Mesh(new THREE.CircleGeometry(50, 50), new THREE.MeshLambertMaterial({color: 0xFFFFFF, side: THREE.DoubleSide}));
+					this.plane.rotation.x = -Math.PI/2;
+					this.plane.receiveShadow = true;
+					this.scene.add(this.plane);
+
+					this.axis = new THREE.AxisHelper(20);
+					this.scene.add(this.axis);
+
+					this.scene.add(Mesh.points());
+					this.scene.add(Mesh.lensFlare({size:1}));
+					this.camera.lookAt(Mesh.lensFlare());
+
+					// this.light.spotLight.target = this.plane;
+
+					Mesh.loadObj({src:'model/Gol D Ace/Gol D Ace', scale: 0.25});
+
+					Mesh.text();
+					
+	    		},
+	    		//{src, material, position, scale, name}
+	    		stats_: null,
+	    		stats: function(){
+	    			if(this.stats_ === null){
+	    				var stats = new Stats();
+		    			stats.domElement.style.position = 'absolute';
+		    			stats.domElement.style.left = '0px';
+		    			stats.domElement.style.top = '0px';
+		    			stats.domElement.style.width = '200px';
+		    			this.stats_ = stats;
+	    			}	    			
+	    			return this.stats_;
+	    		},
+	    		update: function(){
+	    			this.stats().update();
+	    			if(Mesh.loadObj_.step === 1) {
+	    				// this.scene.add(Mesh.loadObj_.obj);
+	    			}
+	    			// this.controls.flyControls.update(clock.getDelta());
+	    			// this.controls.firstPersonControls.update(clock.getDelta());
+	    			// this.controls.orbitControls.update(clock.getDelta());
+	    		}
+	    	};
+	    	var Mesh = {
+	    		loadObj_: {step: 0, obj: null},
+	    		loadObj: function(obj){
+	    			obj = obj === undefined ? {} : obj;
+	    			var src = obj.src !== undefined ? obj.src : 'model/tree.obj';
+	    			var material = obj.material !== undefined ? obj.material : new THREE.MeshLambertMaterial({color: 0xFFFFFF, side: THREE.DoubleSide});
+	    			var position = obj.position !== undefined ? obj.position : {x: 0, y: 0, z: 0};
+	    			var scale = obj.scale !== undefined ? obj.scale : 1;
+	    			var name = obj.name !== undefined ? obj.name : 'load';
+	    			var self = this;
+					// THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+					var mtlLoader = new THREE.MTLLoader();
+					mtlLoader.setPath(src.substr(0, src.lastIndexOf('/') + 1))
+					mtlLoader.load( src.substr(src.lastIndexOf('/') + 1, src.length) + '.mtl', function( materials ) {
+
+						materials.preload();
+
+						var objLoader = new THREE.OBJLoader();
+						objLoader.setMaterials( materials );
+						objLoader.setPath(src.substr(0, src.lastIndexOf('/') + 1));
+						objLoader.load( src.substr(src.lastIndexOf('/') + 1, src.length) + '.obj', function ( object ) {
+							object.children.forEach(function(e){
+								e.castShadow = true;
+							});
+							// object.position.y = - 95;
+
+							object.scale.set(scale, scale, scale);
+							object.name = name;
+							object.children.forEach(function(e){
+								e.material.opacity = 0;
+							});
+		    				// self.scene.add(object);	
+		    				self.loadObj_.obj = object;
+	    				},
+	    				function(xhr){
+	    					console.log(xhr.loaded / xhr.total * 100 + '% loaded');
+	    					if(xhr.loaded / xhr.total === 1) {
+	    						self.loadObj_.step = 1;
+	    					}
+	    				},
+	    				function(xhr){
+	    					console.log('load cause error');
+	    				});
+					});
+	    		},
+	    		points_: {step: 0, obj: null},
+	    		points: function(e){
+	    			if(this.points_.obj === null){
+	    				if(e === undefined) e = {};
+		    			var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("img/alpha3.png");
+		    			var size = e.size !== undefined ? e.size : 15;
+		    			var transparent = e.transparent !== undefined ? e.transparent : true;
+		    			var opacity = e.opacity !== undefined ? e.opacity : 0.5;
+		    			var count = e.count !== undefined ? e.count : 100;
+		    			var w = e.w !== undefined ? e.w : 50;
+		    			var h = e.h !== undefined ? e.h : 50;
+		    			var l = e.l !== undefined ? e.l : 50;
+		    			var rvx = e.vx !== undefined ? e.vx : 0.5;
+		    			var rvy = e.vy !== undefined ? e.vy : 0.1;
+		    			var rvz = e.vz !== undefined ? e.vz : 0.5;
+		    			var name = e.name !== undefined ? e.name : 'points';
+	    				var geometry = new THREE.Geometry();
+	    				var material = new THREE.PointsMaterial({size: size, vertexColors: true, color: 0xffffff, transparent: transparent, opacity:opacity, map: texture, depthWrite: false});
+
+	    				for(var i =0; i < count; i++){
+	    					var x = Math.random() * w - w/2;
+	    					var y = Math.random() * h;
+	    					var z = Math.random() * l - l/2;
+	    					var vertor = new THREE.Vector3(x, y, z);
+	    					vertor.vx = Math.random() - rvx;
+	    					vertor.vy = rvy + Math.random() / 5;
+	    					vertor.vz = Math.random() - rvz;
+	    					var t = z / x;
+	    					if(z > 0){
+	    						vertor.i = Math.round(Math.atan(t) / Math.PI * 180);
+	    					}else if(z < 0){
+	    						vertor.i = Math.round((Math.atan(t) + Math.PI) / Math.PI * 180);
+	    					}else {
+	    						vertor.i = 0;
+	    					}
+	    					vertor.r = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2)));
+	    					vertor.r_ = w;
+	    					vertor.rv = Math.random();
+	    					vertor.h_ = h;
+	    					vertor.step = 0;
+	    					vertor.id_ = i;
+	    					geometry.vertices.push(vertor);
+	    					geometry.colors.push(new THREE.Color(0xffffff));
+	    				}
+	    				var points = new THREE.Points(geometry, material);
+	    				points.name = name;
+	    				this.points_.obj = points;
+	    			}
+	    			return this.points_.obj;
+	    		},
+	    		lensFlare_: null,
+	    		lensFlare: function(e){
+	    			if(this.lensFlare_ === null){
+	    				if(e === undefined) e = {};
+		    			var background = e.background !== undefined ? e.background : new THREE.TextureLoader().load("img/alpha0.png");
+						var texture = e.texture !== undefined ? e.texture : new THREE.TextureLoader().load("img/alpha3.png");
+						var size = e.size !== undefined ? e.size : 150;
+						var distance = e.distance !== undefined ? e.distance : 0.0;
+						var color = e.color !== undefined ? e.color : 0xFFFFFF;
+						var position = e.position !== undefined ? e.position : {x: 0, y: 25, z: 0};
+						var name = e.name !== undefined ? e.name : 'lensFlare';
+						var lensFlare = new THREE.LensFlare(background, size, distance, THREE.AdditiveBlending, color);
+						lensFlare.add(texture, size, distance, THREE.AdditiveBlending);
+						lensFlare.position.copy(position);
+						lensFlare.name = name;
+						this.lensFlare_ = lensFlare;
+	    			}
+						return this.lensFlare_;
+	    		},
+	    		//{str, size, height, fontSrc, position, name}
+	    		text_: {step: 0, obj: null},
+	    		text: function(e){
+	    			if(this.text_.obj === null){
+	    				if(e === undefined) e = {};
+	    				var self = this;
+	    				var str = e.str !== undefined ? e.str : 'Happy Birthday';
+	    				var size = e.size !== undefined ? e.size : 10;
+	    				var height = e.height !== undefined ? e.height : 1;
+	    				var fontSrc = e.fontSrc !== undefined ? e.fontSrc : 'fonts/helvetiker_bold';
+	    				var position = e.position !== undefined ? e.position : {x: -45, y: 60, z: 0};
+	    				var name = e.name !== undefined ? e.name : 'text';
+	    				var loader = new THREE.FontLoader();
+						loader.load(fontSrc + '.typeface.json', 
+							function(font){
+								geometry = new THREE.TextGeometry('Happy Birthday', {font: font, size:size, height: height});
+								mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: 0xff0000, opacity: 0, wireframe: false}));
+								mesh.position.copy(position);
+								mesh.name = name;
+								self.text_.obj = mesh;
+								self.text_.step = 1;
+							}
+						);
+
+	    			}
+	    			return this.text_.obj;
+	    		}
+
+	    	}
+	    	var Action = {
+	    		camera: false,
+	    		arrow: false,
+	    		export: false,
+	    		import: false,
+	    		load: false,
+	    		influence1: 0.01,
+	    		influence2: 0.01,
+
+	    	}
+	    	var GUI = {
+	    		gui: null,
+	    		init: function(){
+	    			// var gui = new dat.GUI();
+	    			// gui.add(Action, 'camera').onChange(function(e){
+	    			// 	if(e){
+	    			// 		stage.scene.add(stage.cameraHelper);
+	    			// 	}else{
+	    			// 		stage.scene.remove(stage.scene.getObjectByName('cameraHelper'));
+	    			// 	}
+	    			// });
+	    			// this.gui = gui;
+	    		}
+	    	}
+	    	function update(){
+	    		stage.update();
+	    		TWEEN.update();
+	    	}
+	    	var t = null;
+	    	function animation(){
+	    		var x = Math.cos(stage.fps * Math.PI / 180) * 40;
+	    		var z = Math.sin(stage.fps * Math.PI / 180) * 40;
+	    		stage.light.spotLight.position.set(x, 100, z);
+	    		if(Mesh.text_.obj !== null){
+	    			if(Mesh.text_.step === 2){
+	    				if(Mesh.text_.obj.material.opacity < 1){
+	    					Mesh.text_.obj.material.opacity += 0.01;
+	    				}
+	    			}
+	    		}
+	    		if(Mesh.points_.obj !== null){
+	    			var vertices = Mesh.points_.obj.geometry.vertices;
+	    			// var colors = Mesh.points_.obj.geometry.colors;
+
+	    			vertices.forEach(function(e){
+	    				e.x = e.r * Math.cos(e.i * Math.PI / 180);
+    					if(e.step === 0){
+    						e.y -= e.vy;
+    					}else if(e.step === 1){
+
+    						e.y += e.vy;
+    					}
+						e.z = e.r * Math.sin(e.i * Math.PI / 180);
+						if(e.i++ >= 360) e.i = 0;
+						// console.log(e.step);
+						if(e.step === 2){
+							// if(e.id_ < 50){
+							// 	e.x -= e.id;
+							// }else{
+							// 	e.x += e.id - 50;
+							// }
+							e.r += e.rv;
+							// e.y -= e.vy;
+							if(e.r >= e.r_) e.r = 0;
+							if(e.y <= e.h_) e.y = e.h_ + 20;
+							stage.scene.add(Mesh.text_.obj);
+							Mesh.text_.step = 2;
+						}else{
+							e.r-= e.rv;
+							if(e.r <= 0) {
+								if(e.step === 0){
+									e.r = e.r_;
+								}else if(e.step === 1){
+									e.r = 0;
+									if(e.y > e.h_ + 15){
+										e.step = 2;
+										// console.log(e);
+									}
+								}
+							}
+		    				if(e.y <= 0) e.y = e.h_;
+						}
+						
+	    			});
+
+	    			// if(Mesh.points_.step === 1){
+	    			// 	colors.forEach(function(e){
+	    			// 		e = new THREE.Color(0xffffff);
+	    			// 	});
+		    		// 	Mesh.points_.obj.geometry.colorsNeedUpdate = true;
+	    			// 	// console.log(colors);
+	    			// }
+	    			Mesh.points_.obj.geometry.verticesNeedUpdate = true;
+	    		}
+	    		if(Mesh.lensFlare_ !== null){
+	    			Mesh.lensFlare_.lensFlares.forEach(function(e){
+	    				if(e.size < 500){
+    						e.size++;
+    					}else{
+	    					if(Mesh.loadObj_.step === 1){
+	    						Mesh.points_.obj.geometry.vertices.forEach(function(e){
+		    						e.step = 1;
+		    					});
+
+		    					stage.scene.add(Mesh.loadObj_.obj);	
+		    					Mesh.loadObj_.step = 2;	
+		    					Mesh.lensFlare_ = null
+	    					}
+	    				}
+	    			});
+	    		}
+	    		if(Mesh.loadObj_.obj != null){
+	    			if(Mesh.loadObj_.step === 2){
+	    				Mesh.loadObj_.obj.children.forEach(function(e){
+	    					if(e.material.opacity < 1){
+	    						e.material.opacity += 0.01;
+	    					}
+	    				});
+	    			}
+	    		}
+	    		if(stage.fps++ >= 360) stage.fps = 0;
+	    	}
+	    	function render(){
+	    		update();
+	    		animation();
+	    		stage.renderer.render(stage.scene, stage.camera);
+				requestAnimationFrame(render);
+	    	}
+
+	    	function start(){
+	    		root = document.getElementById('root');
+	    		clock = new THREE.Clock();
+	    		stage.init();
+	    		// GUI.init();
+	    		render();
+	    	}
+
+	    </script>
+	</head>
+	<body onload="start()">
+		<div id='root'></div>
+	</body>
+</html>
