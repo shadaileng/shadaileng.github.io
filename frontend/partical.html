@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            /*display: none;*/
+        }
+    </style>
+    <metacharset="utf-8">
+        <title>Partical</title>
+        <script>
+            let w, h;
+            let canvas, ctx;
+            let contain;
+            window.onload = function() {
+                canvas = document.getElementById("canvas");
+                ctx = canvas.getContext("2d");
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                contain = [];
+                window.onresize = function() {
+                    w = canvas.width = window.innerWidth;
+                    h = canvas.height = window.innerHeight;
+                }
+                for(let i = 0; i < 40; i++){
+                    let p = new Partical();
+                    p.init();
+                    contain.push(p);
+                }
+                flush();
+                // console.log();
+                canvas.onclick = function(e) {
+                    let p = new Partical();
+                    p.init(e.clientX, e.clientY);
+                    contain.push(p);
+                }
+                canvas.addEventListener("mousemove", function(e) {
+
+                });
+
+            }
+
+            function flush() {
+                ctx.fillStyle = "rgba(0, 0, 0, 1)";
+                ctx.fillRect(0, 0, w, h);
+                for(let i = 0; i < contain.length; i++){
+                    contain[i].update();
+                    for(let j = 0; j < contain.length; j++){
+                        if(j !== i){
+                            let d = getDistance(contain[i].x, contain[i].y, contain[j].x, contain[j].y);
+                            if(d < 20000){
+                                ctx.strokeStyle =randomColor();
+                                ctx.beginPath();
+                                ctx.moveTo(contain[i].x, contain[i].y);
+                                ctx.lineTo(contain[j].x, contain[j].y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+                // document.getElementsByTagName("body")[0].style.background = "url(" + canvas.toDataURL() + ")";
+                requestAnimationFrame(flush);
+            }
+
+            function randomCustom(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function randomColor() {
+                let r = Math.floor(Math.random() * 200) + 56;
+                let g = Math.floor(Math.random() * 200) + 56;
+                let b = Math.floor(Math.random() * 100) + 156;
+                let a = Math.random() * 0.5 + 0.5;
+                return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
+            }
+            function getDistance(x1, y1, x2, y2){
+                return Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2);
+            }
+            function Partical(){}
+            Partical.prototype = {
+                init: function(x, y){
+                    this.x = x;
+                    this.y = y;
+                    if(this.x === undefined) this.x =randomCustom(0, w);
+                    if(this.y === undefined) this.y =randomCustom(0, h);
+                    this.speedX =randomCustom(-5, 5);
+                    this.speedY =randomCustom(-5, 5);
+                    this.color =randomColor();
+                },
+                update: function(){
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if(this.x <= 10 ||this.x >= (w - 10)) this.speedX *= -1;
+                    if(this.y <= 10 ||this.y >= (h - 10)) this.speedY *= -1;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    // ctx.fillRect(this.x, this.y, 10, 10);
+                    ctx.fill();
+                }
+            }
+        </script>
+</head>
+
+<body>
+    <canvas id="canvas">你的浏览器不支持canvas标签。</canvas>
+</body>
+
+</html>
