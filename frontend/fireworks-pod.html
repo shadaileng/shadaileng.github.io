@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+        }
+        
+        .firework {
+            width: 10px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: red;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+        }
+        
+        .fire {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: red;
+            position: absolute;
+        }
+    </style>
+    <metacharset="utf-8">
+        <title>Fireworks</title>
+        <script>
+            window.onload = function() {
+                document.onclick = function(e) {
+                    let x = e.clientX;
+                    let y = e.clientY;
+                    let oDiv = document.createElement("div");
+                    oDiv.className = "firework";
+                    // oDiv.speedX = randomCustom(1, 2);
+                    oDiv.style.left = x + "px";
+                    oDiv.style.backgroundColor = randomColor();
+                    oDiv.speedY = randomCustom(5, 10);
+                    document.body.appendChild(oDiv);
+
+                    let run = setInterval(function() {
+                        if (oDiv !== null) {
+                            if (y < oDiv.offsetTop) {
+                                oDiv.style.top = oDiv.offsetTop - oDiv.speedY + "px";
+                            } else {
+
+                                document.body.removeChild(oDiv);
+                                oDiv = null;
+                                clearInterval(run);
+                                let n = Math.ceil(randomCustom(50, 100));
+                                let fires = [];
+                                for (let i = 0; i < n; i++) {
+                                    let fire = document.createElement("div");
+                                    fire.className = "fire";
+                                    fire.style.left = x + "px";
+                                    fire.style.top = y + "px";
+                                    fire.style.backgroundColor = randomColor();
+                                    fire.speedX = randomCustom(-10, 10);
+                                    fire.speedY = randomCustom(-20, 10);
+                                    document.body.appendChild(fire);
+                                    fires.push(fire);
+                                }
+                                let boom = setInterval(function() {
+                                    for (let i = 0; i < fires.length; i++) {
+                                        fires[i].style.left = fires[i].offsetLeft + fires[i].speedX + "px";
+                                        fires[i].style.top = fires[i].offsetTop + fires[i].speedY + "px";
+                                        fires[i].speedY += 1;
+                                        if (fires[i].offsetLeft < 0 || fires[i].offsetLeft > window.innerWidth || fires[i].offsetTop > window.innerHeight) {
+                                            document.body.removeChild(fires[i]);
+                                            fires.splice(i, 1);
+                                            if (fires.length <= 0) {
+                                                clearInterval(boom);
+                                            }
+                                        }
+
+                                    }
+                                }, 1000 / 60);
+
+                                // clearInterval(run);
+                            }
+                        }
+
+                    }, 1000 / 60);
+
+                }
+            }
+
+            function randomCustom(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function randomColor() {
+                let r = Math.floor(Math.random() * 156) + 100;
+                let g = Math.floor(Math.random() * 156) + 100;
+                let b = Math.floor(Math.random() * 156) + 100;
+                let a = Math.random();
+                return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
+            }
+        </script>
+</head>
+
+<body>
+
+</body>
+
+</html>
