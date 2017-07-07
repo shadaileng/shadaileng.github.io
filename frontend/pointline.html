@@ -1,0 +1,180 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+    <metacharset="utf-8">
+        <title>Fireworks</title>
+        <script>
+            let w, h;
+            let canvas, ctx;
+            let fireworks;
+            let centerX, centerY;
+            window.onload = function() {
+                canvas = document.getElementById("canvas");
+                ctx = canvas.getContext("2d");
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                fireworks = [];
+                window.onresize = function() {
+                    w = canvas.width = window.innerWidth;
+                    h = canvas.height = window.innerHeight;
+                }
+                flush();
+                canvas.onclick = function(e) {
+                    let x = e.clientX;
+                    let y = e.clientY;
+                    let p = new Partical();
+                    p.init(x, y);
+                    fireworks.push(p);
+                }
+                canvas.addEventListener("mousemove", function(e) {
+                    let x = e.clientX;
+                    let y = e.clientY;
+                    centerX = x;
+                    centerY = y;
+                    for (let i = 0; i < fireworks.length; i++) {
+                        let d = getDistance(fireworks[i].x, fireworks[i].y, x, y);
+
+                        if (d < 20000) {
+                            pLineP(fireworks[i].x, fireworks[i].y, x, y);
+                        }
+                    }
+                });
+
+            }
+
+            function flush() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+                ctx.fillRect(0, 0, w, h);
+                for (let i = 0; i < fireworks.length; i++) {
+                    fireworks[i].update();
+                    for (let j = 0; j < fireworks.length; j++) {
+                        let d = getDistance(fireworks[i].x, fireworks[i].y, fireworks[j].x, fireworks[j].y);
+                        if (i !== j && d < 20000) {
+                            pLineP(fireworks[i].x, fireworks[i].y, fireworks[j].x, fireworks[j].y);
+                            // fireworks[i].step = !fireworks[i].step;
+                        }
+                    }
+                    if (getDistance(fireworks[i].x, fireworks[i].y, centerX, centerY) < 15000) {
+                        pLineP(fireworks[i].x, fireworks[i].y, centerX, centerY);
+                        if (getDistance(fireworks[i].x, fireworks[i].y, centerX, centerY) > 14500) {
+                            if (centerX > fireworks[i].x) {
+                                fireworks[i].speedX = Math.abs(fireworks[i].speedX);
+                            } else {
+                                fireworks[i].speedX = -Math.abs(fireworks[i].speedX);
+                            }
+
+                            if (centerY > fireworks[i].y) {
+                                fireworks[i].speedY = Math.abs(fireworks[i].speedY);
+                            } else {
+                                fireworks[i].speedY = -Math.abs(fireworks[i].speedY);
+                            }
+                        }
+                    }
+                }
+                requestAnimationFrame(flush);
+            }
+
+            function randomCustom(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function getDistance(x1, y1, x2, y2) {
+                return Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
+            }
+
+            function pLineP(x1, y1, x2, y2) {
+                ctx.strokeStyle = randomColor();
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
+            function randomColor() {
+                let r = Math.floor(Math.random() * 200) + 56;
+                let g = Math.floor(Math.random() * 200) + 56;
+                let b = Math.floor(Math.random() * 100) + 156;
+                let a = Math.random() * 0.5 + 0.5;
+                return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
+            }
+
+            function Partical() {}
+            Partical.prototype = {
+                init: function(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    if (this.x === undefined) this.x = randomCustom(0, w);
+                    if (this.y === undefined) this.y = randomCustom(0, h);
+
+                    this.speedX = randomCustom(-5, 5);
+                    this.speedY = randomCustom(-5, 5);
+                    this.color = randomColor();
+                    this.step = true;
+                    this.r = 100;
+                    this.angle = 0;
+                    this.centerX = w / 2;
+                    this.centerY = h / 2;
+                },
+                update: function() {
+                    if (this.step) {
+                        this.x += this.speedX;
+                        this.y += this.speedY;
+                        if (this.x <= 10 || this.x >= (w - 10)) {
+                            this.speedX *= -1;
+                            if (this.x <= 10) {
+                                this.x = 10;
+                            } else {
+                                this.x = (w - 10);
+                            }
+                        }
+                        if (this.y <= 10 || this.y >= (h - 10)) {
+                            this.speedY *= -1;
+                            if (this.y <= 10) {
+                                this.y = 10;
+                            } else {
+                                this.y = (h - 10);
+                            }
+                        }
+                    } else if (!this.step) {
+                        this.x = Math.cos(this.angle * Math.PI / 180) * this.r + this.centerX;
+                        this.y = Math.sin(this.angle * Math.PI / 180) * this.r + this.centerY;
+                        this.angle++;
+                        if (this.angle >= 360) this.angle = 0;
+                    }
+                    this.draw();
+                },
+                draw: function() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        </script>
+</head>
+
+<body>
+    <canvas id="canvas">你的浏览器不支持canvas标签。</canvas>
+</body>
+
+</html>
