@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+    <metacharset="utf-8">
+        <title>Fireworks</title>
+        <script>
+            let w, h;
+            let canvas, ctx;
+            let fireworks;
+            window.onload = function() {
+                canvas = document.getElementById("canvas");
+                ctx = canvas.getContext("2d");
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                fireworks = [];
+                window.onresize = function() {
+                    w = canvas.width = w;
+                    h = canvas.height = h;
+                }
+                flush();
+
+
+
+
+
+                canvas.onclick = function(e) {
+
+                }
+                canvas.addEventListener("mousemove", function(e) {
+
+                });
+
+            }
+
+            function flush() {
+                ctx.fillStyle = "rgba(0, 0, 0, 1)";
+                ctx.fillRect(0, 0, w, h);
+                clock();
+                requestAnimationFrame(flush);
+            }
+
+            function clock() {
+                let deg = 2 * Math.PI / 12;
+                for (let i = 0; i < 13; i++) {
+                    let x = Math.cos(i * deg) * 150 + w / 2;
+                    let y = Math.sin(i * deg) * 150 + h / 2;
+                    ctx.lineTo(x, y);
+                }
+                let color = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, 150);
+                color.addColorStop(0, '#308');
+                color.addColorStop(1, '#0ff');
+                ctx.fillStyle = color;
+                ctx.fill();
+
+                //数字
+                for (let i = 1; i < 13; i++) {
+                    let x = Math.sin(i * deg) * 120 + w / 2;
+                    let y = -Math.cos(i * deg) * 120 + h / 2;
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 20px 华文彩云';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(i, x, y);
+                }
+                //刻度
+                ctx.beginPath();
+                for (let i = 0; i < 13; i++) {
+                    let x = Math.cos(i * deg);
+                    let y = Math.sin(i * deg);
+                    ctx.moveTo(x * 135 + w / 2, y * 135 + h / 2);
+                    ctx.lineTo(x * 150 + w / 2, y * 150 + h / 2);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                //小刻度
+                ctx.beginPath();
+                for (let i = 0; i < 60; i++) {
+                    let x = Math.cos(i * deg / 5);
+                    let y = Math.sin(i * deg / 5);
+                    ctx.moveTo(x * 138 + w / 2, y * 138 + h / 2);
+                    ctx.lineTo(x * 145 + w / 2, y * 145 + h / 2);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                //文字
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 34px 幼圆';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.fillText('Clock', w / 2, h / 2 + 70);
+
+                let now = new Date();
+                let h_ = now.getHours() % 12 * 2 * Math.PI / 12;
+                let m_ = now.getMinutes() * 2 * Math.PI / 60;
+                let s_ = now.getSeconds() * 2 * Math.PI / 60;
+                //秒针
+                hand({
+                    rad: s_
+                });
+                //分针
+                hand({
+                    rad: s_ / 60 + m_,
+                    width: 2,
+                    length: 100,
+                    color: '#F44'
+                });
+                //时针
+                hand({
+                    rad: m_ / 60 + h_,
+                    width: 3,
+                    length: 80,
+                    color: '#F00'
+                });
+
+
+            }
+
+            function hand(param) {
+                let p = {
+                    rad: 0,
+                    center: {
+                        x: w / 2,
+                        y: h / 2
+                    },
+                    width: 1,
+                    length: 100,
+                    color: '#F88'
+                };
+                copyProperty(param, p);
+                ctx.beginPath();
+                let x = Math.sin(param.rad);
+                let y = -Math.cos(param.rad);
+                ctx.moveTo(param.center.x, param.center.y);
+                ctx.lineTo(x * param.length + param.center.x, y * param.length + param.center.y);
+                ctx.closePath();
+                ctx.lineWidth = param.width;
+                ctx.strokeStyle = param.color;
+                ctx.stroke();
+            }
+
+            function copyProperty(dist, src) {
+                for (let p in src) {
+                    dist[p] = dist[p] || src[p];
+                }
+            }
+
+            function randomCustom(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function randomColor() {
+                let r = Math.floor(Math.random() * 200) + 56;
+                let g = Math.floor(Math.random() * 200) + 56;
+                let b = Math.floor(Math.random() * 100) + 156;
+                let a = Math.random() * 0.5 + 0.5;
+                return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
+            }
+        </script>
+</head>
+
+<body>
+    <canvas id="canvas">你的浏览器不支持canvas标签。</canvas>
+</body>
+
+</html>
